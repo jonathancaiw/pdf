@@ -87,6 +87,8 @@ def parse_pdf(filename):
         write_log(org_no + ' contract config is None')
         return
 
+    output_string = StringIO()
+
     with open(filename, 'rb') as in_file:
         parser = PDFParser(in_file)
         doc = PDFDocument(parser)
@@ -97,6 +99,7 @@ def parse_pdf(filename):
             interpreter.process_page(page)
 
     text = output_string.getvalue()
+    output_string.close()
 
     check_list = {}
     for keyword in KEY_VALUES.keys():
@@ -143,15 +146,13 @@ def find_pdf(file_path):
             find_pdf(sub_path)
         elif filename.endswith('.pdf'):
             parse_pdf(sub_path)
-            print(filename)
+            print(sub_path)
             total += 1
         else:
             print('other file', sub_path)
 
         print('match %d, mismatch %d, total %d ...' % (total - mismatch, mismatch, total))
 
-
-output_string = StringIO()
 
 """
 SELECT
