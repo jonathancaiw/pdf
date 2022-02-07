@@ -10,8 +10,9 @@ from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 from util import *
 
-# 合同路径
-FILE_PATH = '/Users/caiwei/Desktop/2022-01-01后合同已签数据-生产环境'
+CONTRACT_CONFIG = '/Users/caiwei/Desktop/contract_config.xlsx'  # 合同配置文件
+FILE_PATH = '/Users/caiwei/Desktop/2022-01-01后合同已签数据-生产环境'  # 合同路径
+KEY_VALUES = {'contract_start_date': '合同开始日期', 'contract_end_date': '合同结束日期', 'charge_end_date': '收费结束日期'}  # 检查项
 
 global total
 global mismatch
@@ -71,11 +72,10 @@ def parse_pdf(filename):
     :param filename:
     :return:
     """
-    global mismatch
     global resume
     global process
 
-    org_no = filename.split('/')[-2]
+    org_no = filename.split('/')[-2]  # 组织机构编码
 
     if not process:
         if org_no != resume:
@@ -83,8 +83,8 @@ def parse_pdf(filename):
         else:
             process = True
 
-    if not org_no in config.keys():
-        write_log(org_no + ' contract is None')
+    if org_no not in contract_config.keys():
+        write_log(org_no + ' contract config is None')
         return
 
     with open(filename, 'rb') as in_file:
@@ -97,33 +97,37 @@ def parse_pdf(filename):
             interpreter.process_page(page)
 
     text = output_string.getvalue()
-    contract_start_date = format_date(config[org_no]['contract_start_date'])
-    contract_end_date = format_date(config[org_no]['contract_end_date'])
-    charge_end_date = format_date(config[org_no]['charge_end_date'])
 
-    # 合同开始日期
-    if contract_start_date is not None:
-        index = text.find(contract_start_date)
-        if index == -1:
-            write_log('合同开始日期,%s,%s' % (contract_start_date, filename))
-            mismatch += 1
-            return
+    check_list = {}
+    for keyword in KEY_VALUES.keys():
+        value = format_date(contract_config[org_no][keyword])
+        if value is not None and len(value.strip()) > 0:
+            if value in check_list.keys():
+                check_list[value].append(keyword)
+            else:
+                check_list[value] = [keyword]
 
-    # 合同结束日期
-    if contract_end_date is not None:
-        index = text.find(contract_end_date)
-        if index == -1:
-            write_log('合同结束日期,%s,%s' % (contract_end_date, filename))
-            mismatch += 1
-            return
+    check_contract(filename, text, check_list)
 
-    # 收费结束日期
-    if charge_end_date is not None:
-        index = text.find(charge_end_date)
-        if index == -1:
-            write_log('收费结束日期,%s,%s' % (charge_end_date, filename))
-            mismatch += 1
-            return
+
+def check_contract(filename, text, check_list):
+    """
+    检查
+    :param filename:
+    :param text:
+    :param check_list:
+    :return:
+    """
+    global mismatch
+
+    for value, keywords in check_list.items():
+        index = -1
+        for keyword in keywords:
+            index = text.find(value, 0 if index == -1 else index + 1)
+            if index == -1:
+                write_log('%s,%s,%s' % (KEY_VALUES[keyword], value, filename))
+                mismatch += 1
+                return
 
 
 def find_pdf(file_path):
@@ -162,7 +166,7 @@ WHERE
 	"status_cd" = '1' 
 	AND "year_no" = '2022'
 """
-config = get_config('/Users/caiwei/Desktop/contract_config.xlsx')  # 合同配置
+contract_config = get_config(CONTRACT_CONFIG)
 
 find_pdf(FILE_PATH)
 
