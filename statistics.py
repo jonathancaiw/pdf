@@ -1,7 +1,7 @@
 from openpyxl import load_workbook
 from util import *
 
-PDF_CHECK_XLSX = '/Users/caiwei/Desktop/日期与当前配置文件对不上的合同.xlsx'
+PDF_CHECK_XLSX = '/Users/caiwei/Desktop/log_20220207_pdf_check.xlsx'
 CONTRACT_XLSX = '/Users/caiwei/Desktop/2022-01-01后合同已签数据-生产环境/2022-01-01后合同已签数据.xlsx'
 
 
@@ -11,25 +11,25 @@ def read_pdf_check(filename):
     :param filename:
     :return:
     """
-    pdf_check = {}
+    pdf_check = {}  # 处理日期、问题类型、正确值、合同路径
 
     workbook = load_workbook(filename)
     worksheet = workbook[workbook.sheetnames[0]]
 
-    skip_header = False
+    skip_header = True
 
     for row in worksheet.rows:
-        if not skip_header:
-            skip_header = True
+        if skip_header:
+            skip_header = False
             continue
 
-        file_path = row[3].value
+        file_path = row[5].value
         splits = file_path.split('.')[0].split('-')
         key = splits[-1]
         pdf_check[key] = {'date': row[0].value,
-                          'type': row[1].value,
-                          'label': row[2].value,
-                          'file_path': row[3].value}
+                          'type': row[3].value,
+                          'label': row[4].value,
+                          'file_path': row[5].value}
 
     workbook.close()
 
