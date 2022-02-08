@@ -73,11 +73,10 @@ contract = read_contract(CONTRACT_XLSX)
 
 for key in pdf_check.keys():
     if key in contract.keys():
-        # 种植户签订+农场签订
-        if contract[key]['contract_sign_no'] == 1 and contract[key]['farm_sign_no'] == 2:
-            write_log('%s,%s,%s,%s,%s,%s,%s,%s' % (
-                key, pdf_check[key]['type'], pdf_check[key]['label'], contract[key]['organization_no'],
-                contract[key]['organization_name'], contract[key]['name'], contract[key]['id_number'],
-                pdf_check[key]['file_path']))
+        write_log('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (
+            key, pdf_check[key]['type'], pdf_check[key]['label'], contract[key]['organization_no'],
+            contract[key]['organization_name'], contract[key]['name'], contract[key]['id_number'],
+            '种植户已签字' if contract[key]['contract_sign_no'] == 1 else '种植户未签字',
+            '农场已盖章' if contract[key]['farm_sign_no'] == 2 else '农场未盖章', pdf_check[key]['file_path']))
     else:
         write_log(pdf_check[key]['file_path'] + ' doesn''t exists')
